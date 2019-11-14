@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+docker build -t omc .
+
+docker run \
+    -it \
+    --rm \
+    -v $(pwd):/tmp \
+    omc \
+    fish

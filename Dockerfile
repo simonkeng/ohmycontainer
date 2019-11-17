@@ -1,8 +1,11 @@
 FROM debian
-
+FROM golang
 ENV DEBIAN_FRONTEND=noninteractive
 
-# install vim, tmux, fish
+#############################################
+#   OS libraries & tools
+#############################################
+
 RUN apt-get update && \
     apt-get install -y curl && \
     apt-get install -y git && \
@@ -10,17 +13,27 @@ RUN apt-get update && \
     apt-get install -y tmux && \
     apt-get install -y software-properties-common && \
     apt-add-repository ppa:fish-shell/release-3 && \
-    apt-get install -y fish 
+    apt-get install -y fish && \
+    apt-get install -y gcc && \
+    apt-get install -y wget && \
+    apt-get clean;
 
-# install powerline fonts for oh-my-vim, 
-# oh-my-tmux, and bobthefish
-RUN apt-get install -y fonts-powerline
-RUN fc-cache -vf
-    
+#############################################
+#   Languages
+#############################################
 
-#######################################
-# install my favorite developer tools
-#######################################
+# install Rust & configure
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+
+ENV PATH="/root/.cargo/bin:${PATH}"
+ENV USER="gandalf"
+
+RUN rustup update
+CMD ["rustc", "--version"]
+
+#############################################
+#   Developer tools
+#############################################
 
 # system tools
 RUN apt-get install -y fzf && \
@@ -44,6 +57,14 @@ RUN npm install -g gtop && \
     npm install -g fkill-cli && \
     npm install -g cfonts
 
+######### WIP ###########
+# install & configure a better diff
+# 
+# RUN git clone https://github.com/so-fancy/diff-so-fancy.git
+# RUN cp diff-so-fancy/diff-so-fancy /usr/local/bin/diff-so-fancy
+# ENV PATH "$PATH:/root/diff-so-fancy/diff-so-fancy"
+# RUN git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
+#########################
 
 ########## WIP #############
 # install nix pkg mgr, to install 
@@ -57,9 +78,21 @@ RUN npm install -g gtop && \
 # x86 assembly docs
 # RUN go get github.com/bnagy/cgasm
 
-######## WIP ##########
+#############################################
+# simple vimrc
+COPY .vimrc /root/.vimrc
+
+# simple tmux config
+COPY .tmux.conf /root/.tmux.conf
+
+#############################################
+#   Oh-my-vim
+#############################################
+
+### WIP ###
+
 # install oh-my-vim
-RUN curl -L https://raw.github.com/liangxianzhe/oh-my-vim/master/tools/install.sh | sh
+# RUN curl -L https://raw.github.com/liangxianzhe/oh-my-vim/master/tools/install.sh | sh
 
 #   oh my vim
 #   post build mods
@@ -86,29 +119,32 @@ RUN curl -L https://raw.github.com/liangxianzhe/oh-my-vim/master/tools/install.s
 # set norelativenumber
 ##########################
 
-# install oh-my-tmux
-WORKDIR /root
-RUN git clone https://github.com/gpakosz/.tmux.git && \
-    ln -s -f .tmux/.tmux.conf && \
-    cp .tmux/.tmux.conf.local .
+#############################################
+#   Oh-my-tmux
+#############################################
 
-######### WIP ###########
-# install & configure a better diff
-# 
-# RUN git clone https://github.com/so-fancy/diff-so-fancy.git
-# RUN cp diff-so-fancy/diff-so-fancy /usr/local/bin/diff-so-fancy
-# ENV PATH "$PATH:/root/diff-so-fancy/diff-so-fancy"
-# RUN git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
-#########################
+# install oh-my-tmux
+# WORKDIR /root
+# RUN git clone https://github.com/gpakosz/.tmux.git && \
+#     ln -s -f .tmux/.tmux.conf && \
+#     cp .tmux/.tmux.conf.local .
+
+
+#############################################
+#   Oh-my-fish, powerline, shell config
+#############################################
 
 # install oh-my-fish & configure
 RUN git clone https://github.com/oh-my-fish/oh-my-fish
 RUN cd oh-my-fish && bin/install --offline --noninteractive
-RUN ["/usr/bin/fish", "-c", "omf update && omf install bobthefish"]
+RUN ["/usr/bin/fish", "-c", "omf update && omf install neolambda"]
 
-# set bobthefish settings
-RUN ["/usr/bin/fish", "-c", "set -g theme_display_git yes"]
-RUN ["/usr/bin/fish", "-c", "set -g theme_powerline_fonts yes"]
+# install powerline fonts for oh-my-vim, 
+# oh-my-tmux, and bobthefish
+# RUN apt-get install -y fonts-powerline
+# RUN fc-cache -vf
 
-
+# bobthefish settings
+# RUN ["/usr/bin/fish", "-c", "set -g theme_display_git yes"]
+# RUN ["/usr/bin/fish", "-c", "set -g theme_powerline_fonts yes"]
 
